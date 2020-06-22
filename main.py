@@ -6,11 +6,13 @@ import torchvision
 import torchvision.transforms as transforms
 from tqdm import tqdm
 
+from dataset import CardsDataset
+
 
 class CNN(nn.Module):
     def __init__(self):
         super().__init__()
-        self.feat_extractor = nn.Sequential(nn.Conv2d(1, 64, 3),
+        self.feat_extractor = nn.Sequential(nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3),
                                             nn.ReLU(),
                                             nn.BatchNorm2d(64),
                                             nn.MaxPool2d(2),
@@ -28,7 +30,12 @@ class CNN(nn.Module):
     def forward(self, x):
         x = self.feat_extractor(x)
         n, c, h, w = x.shape
+        #size mismatch da extractor a classifier troppe feature?
+        #RuntimeError: size mismatch, m1: [8 x 1936512], m2: [3200 x 1024] at
+        print(x.shape)
         x = x.view(n, -1)
+        print(x.shape)
+
         x = self.classifier(x)
         return x
 
@@ -67,7 +74,12 @@ class Trainer(object):
 
         for images, labels in tqdm(self.test_loader,
                                    total=len(self.test_loader)):
-            images, labels = images.to(self.device), labels.to(self.device)
+
+            print(type(labels))
+            print(labels)
+
+            images = images.to(self.device)
+            #labels.to(self.device)
 
             output = self.softmax(self.model(images))
             predicted = torch.max(output, dim=1)[1]  # argmax the output
@@ -87,17 +99,15 @@ if __name__ == '__main__':
 
     # set the seeds to repeat the experiments
     print(torch.cuda.get_device_name(0))
-    print(torch.cuda.is_available())
-    
-    print(torch.cuda.device_count())
-    #exit(0)
 
     if 'cuda' in config['device']:
         torch.cuda.manual_seed_all(config['seed'])
     else:
         torch.manual_seed(config['seed'])
 
-    transform = transforms.Compose([transforms.ToTensor(),
+
+    #resize o collate_fn
+    transform = transforms.Compose([transforms.Resize((500,500)),transforms.ToTensor(),
                                     transforms.Normalize((0.5,),
                                                          (0.5,))])
 
@@ -108,17 +118,14 @@ if __name__ == '__main__':
                           weight_decay=config['weight_decay'])
 
     batch_size = 8
-    train_loader = DataLoader(
-        #Dataset custom train
-        torchvision.datasets.MNIST('./mnist', download=True, train=True,
-                                   transform=transform),
+    train_loader = DataLoader(CardsDataset(img_dir="data",train=True,transform=transform),
         batch_size=config['batch_size'], shuffle=True)
     test_loader = DataLoader(
-        #Dataset custom train
-        torchvision.datasets.MNIST('./mnist', download=True, train=False,
-                                   transform=transform),
+        CardsDataset(img_dir="data",train=False,transform=transform),
         batch_size=config['batch_size'], shuffle=False)
+
 
     trainer = Trainer(model, config['device'], train_loader, test_loader,
                       criterion, optimizer)
+
     trainer.train(epochs=config['epochs'])
