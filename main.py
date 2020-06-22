@@ -16,10 +16,17 @@ class CNN(nn.Module):
                                             nn.ReLU(),
                                             nn.BatchNorm2d(64),
                                             nn.MaxPool2d(2),
+
                                             nn.Conv2d(64, 128, 3),
                                             nn.ReLU(),
                                             nn.BatchNorm2d(128),
-                                            nn.MaxPool2d(2))
+                                            nn.MaxPool2d(2),
+                                            
+                                            nn.Conv2d(128, 192, 3),
+                                            nn.ReLU(),
+                                            nn.BatchNorm2d(192),
+                                            nn.MaxPool2d(2)
+                                            )
 
         self.classifier = nn.Sequential(nn.Linear(25 * 128, 1024),
                                         nn.ReLU(),
