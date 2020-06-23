@@ -15,12 +15,12 @@ class CNN(nn.Module):
         self.feat_extractor = nn.Sequential(nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3),
                                             nn.ReLU(),
                                             nn.BatchNorm2d(64),
-                                            nn.MaxPool2d(2),
+                                            nn.MaxPool2d(4),
 
                                             nn.Conv2d(64, 128, 3),
                                             nn.ReLU(),
                                             nn.BatchNorm2d(128),
-                                            nn.MaxPool2d(2),
+                                            nn.MaxPool2d(4),
                                             
                                             nn.Conv2d(128, 192, 3),
                                             nn.ReLU(),
@@ -28,21 +28,18 @@ class CNN(nn.Module):
                                             nn.MaxPool2d(2)
                                             )
 
-        self.classifier = nn.Sequential(nn.Linear(25 * 128, 1024),
+        self.classifier = nn.Sequential(nn.Linear(37632, 1024),
                                         nn.ReLU(),
                                         nn.Linear(1024, 1024),
                                         nn.ReLU(),
-                                        nn.Linear(1024, 10))
+                                        nn.Linear(1024, 40))
 
     def forward(self, x):
         x = self.feat_extractor(x)
         n, c, h, w = x.shape
+        print("N {} c {} h {} w {}".format(n,c,h,w))
         #size mismatch da extractor a classifier troppe feature?
-        #RuntimeError: size mismatch, m1: [8 x 1936512], m2: [3200 x 1024] at
-        print(x.shape)
         x = x.view(n, -1)
-        print(x.shape)
-
         x = self.classifier(x)
         return x
 
@@ -82,14 +79,15 @@ class Trainer(object):
         for images, labels in tqdm(self.test_loader,
                                    total=len(self.test_loader)):
 
-            print(type(labels))
-            print(labels)
-
             images = images.to(self.device)
-            #labels.to(self.device)
+            labels = labels.to(self.device)
 
             output = self.softmax(self.model(images))
             predicted = torch.max(output, dim=1)[1]  # argmax the output
+            print("\nPred ")
+            print(predicted)
+            print("\nLabels ")
+            print(labels)
             total += (predicted == labels).sum().item()
 
         return total / len(self.test_loader.dataset)
@@ -100,7 +98,7 @@ if __name__ == '__main__':
               'momentum': 0.9,
               'weight_decay': 0.001,
               'batch_size': 8,
-              'epochs': 10,
+              'epochs': 40,
               'device': 'cuda:0',
               'seed': 314}
 

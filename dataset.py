@@ -17,6 +17,7 @@ class CardsDataset(Dataset):
         """
 
         self.seeds = ["bastoni", "spade", "coppe", "denari"]
+        self.labels={}
         self.n_cards = 10
         self.img_names = []
         self.train=train
@@ -33,6 +34,7 @@ class CardsDataset(Dataset):
                     str=os.path.join(self.img_dir,"{}_{}/{}_{}{}.png".format(j, seed, j, seed, i))
                     if os.path.isfile(str):
                         self.img_names.append(str)
+                        self.labels[len(self.img_names)-1]=self.seeds.index(seed)*10+j-1
 
     def __len__(self):
         return len(self.img_names)
@@ -47,11 +49,14 @@ class CardsDataset(Dataset):
         """
 
         X = Image.open(self.img_names[index])
-        Y = self.img_names[index].split("/")[1]
 
         if self.transform is not None:
             X = self.transform(X)
 
-        #print(X.shape)
+        return X,self.index_to_label(index)
 
-        return X,Y
+    def index_to_label(self,idx):
+        return self.labels[idx]
+
+    def index_to_string(self, idx):
+        return self.img_names[idx].split("/")[1]
