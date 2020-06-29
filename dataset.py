@@ -17,6 +17,8 @@ class CardsDataset(Dataset):
         """
 
         self.seeds = ["bastoni", "spade", "coppe", "denari"]
+        self.cards_names = ["asso", "2", "3", "4","5","6","7","fante","cavallo","re"]
+
         self.labels={}
         self.n_cards = 20
         self.img_names = []
@@ -29,12 +31,12 @@ class CardsDataset(Dataset):
 
         #carica carte
         for seed in self.seeds:
-            for j in range(1,11):
+            for j in self.cards_names:
                 for i in range(0,self.n_cards):
-                    str=os.path.join(self.img_dir,"{}_{}/{}_{}{}.png".format(j, seed, j, seed, i))
+                    str = os.path.join(self.img_dir,"{}_{}/{}_{}{}.png".format(j, seed, j, seed, i))
                     if os.path.isfile(str):
                         self.img_names.append(str)
-                        self.labels[len(self.img_names)-1]=self.seeds.index(seed)*10+j-1
+                        self.labels[len(self.img_names)-1]=self.seeds.index(seed)*10+self.cards_names.index(j)-1
 
     def __len__(self):
         return len(self.img_names)
