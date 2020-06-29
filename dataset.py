@@ -1,7 +1,7 @@
 from PIL import Image
 from torchvision.transforms import ToTensor, ToPILImage
 import os
-
+import random
 from torch.utils.data import Dataset
 
 
@@ -16,15 +16,21 @@ class CardsDataset(Dataset):
         :param transform: apply some transforms like cropping, rotating, etc on input image
         """
 
-        self.seeds = ["bastoni", "spade", "coppe", "denari"]
+        #self.seeds = ["bastoni", "spade", "coppe", "denari"]
+        self.seeds = ["spade"]
+
         self.cards_names = ["asso", "2", "3", "4","5","6","7","fante","cavallo","re"]
+        self.n_cards = 20
+        self.train=train
+        self.img_dir = img_dir
+
+        if not self.train:
+            self.n_cards=20
+            self.img_dir = self.img_dir+"/test"
 
         self.labels={}
-        self.n_cards = 20
         self.img_names = []
-        self.train=train
 
-        self.img_dir = img_dir
         self.transform = transform
         self.to_tensor = ToTensor()
         self.to_pil = ToPILImage()
@@ -36,7 +42,12 @@ class CardsDataset(Dataset):
                     str = os.path.join(self.img_dir,"{}_{}/{}_{}{}.png".format(j, seed, j, seed, i))
                     if os.path.isfile(str):
                         self.img_names.append(str)
-                        self.labels[len(self.img_names)-1]=self.seeds.index(seed)*10+self.cards_names.index(j)-1
+                        self.labels[len(self.img_names)-1]=self.seeds.index(seed)*10+self.cards_names.index(j)
+        if self.train:
+            print("Train")
+        else:
+            print("Test")
+        print("Loaded {}".format(len(self.img_names)))
 
     def __len__(self):
         return len(self.img_names)

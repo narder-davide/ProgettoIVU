@@ -12,32 +12,31 @@ from dataset import CardsDataset
 class CNN(nn.Module):
     def __init__(self):
         super().__init__()
-        self.feat_extractor = nn.Sequential(nn.Conv2d(in_channels=3, out_channels=10, kernel_size=5),
-                                            nn.ReLU(),
-                                            nn.BatchNorm2d(10),
-                                            nn.MaxPool2d(4),
-
-                                            nn.Conv2d(10, 20, 3),
+        self.feat_extractor = nn.Sequential(nn.Conv2d(in_channels=3, out_channels=20, kernel_size=5),
                                             nn.ReLU(),
                                             nn.BatchNorm2d(20),
                                             nn.MaxPool2d(2),
-                                            
-                                            nn.Conv2d(20, 30, 3),
+
+                                            nn.Conv2d(20, 40, 3),
                                             nn.ReLU(),
-                                            nn.BatchNorm2d(30),
+                                            nn.BatchNorm2d(40),
+                                            nn.MaxPool2d(2),
+                                            
+                                            nn.Conv2d(40, 50, 3),
+                                            nn.ReLU(),
+                                            nn.BatchNorm2d(50),
                                             nn.MaxPool2d(2)
                                             )
 
-        self.classifier = nn.Sequential(nn.Linear(25230, 1024),
+        self.classifier = nn.Sequential(nn.Linear(127750, 1024),
                                         nn.ReLU(),
                                         nn.Linear(1024, 1024),
                                         nn.ReLU(),
-                                        nn.Linear(1024, 40))
+                                        nn.Linear(1024, 10))
 
     def forward(self, x):
         x = self.feat_extractor(x)
         n, c, h, w = x.shape
-        print("N {} c {} h {} w {}".format(n,c,h,w))
         #size mismatch da extractor a classifier troppe feature?
         x = x.view(n, -1)
         x = self.classifier(x)
@@ -70,12 +69,12 @@ class Trainer(object):
                 loss.backward()  # compute the derivatives of the model
                 optimizer.step()  # update weights according to the optimizer
 
-            print('\nAccuracy at epoch {}: {}'.format(epoch, self.evaluate()))
+            print('\nTest Accuracy at epoch {}: {}'.format(epoch, self.evaluate()))
 
     def evaluate(self):
         self.model.eval()  # set the model to eval mode
-        total = 0
-
+        total_train = 0
+        total_test = 0
         for images, labels in tqdm(self.test_loader,
                                    total=len(self.test_loader)):
 
@@ -84,13 +83,19 @@ class Trainer(object):
 
             output = self.softmax(self.model(images))
             predicted = torch.max(output, dim=1)[1]  # argmax the output
-            print("\nPred ")
-            print(predicted)
-            print("\nLabels ")
-            print(labels)
-            total += (predicted == labels).sum().item()
+            total_test += (predicted == labels).sum().item()
 
-        return total / len(self.test_loader.dataset)
+        for images, labels in tqdm(self.train_loader,
+                                   total=len(self.train_loader)):
+
+            images = images.to(self.device)
+            labels = labels.to(self.device)
+
+            output = self.softmax(self.model(images))
+            predicted = torch.max(output, dim=1)[1]  # argmax the output
+            total_train += (predicted == labels).sum().item()
+
+        return  total_test / len(self.test_loader.dataset), total_train / len(self.train_loader.dataset)
 
 
 if __name__ == '__main__':
@@ -111,7 +116,6 @@ if __name__ == '__main__':
         torch.manual_seed(config['seed'])
 
 
-    #resize o collate_fn
     transform = transforms.Compose([transforms.Resize((600,300)),transforms.ToTensor(),
                                     transforms.Normalize((0.5,),
                                                          (0.5,))])
