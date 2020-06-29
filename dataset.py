@@ -18,7 +18,7 @@ class CardsDataset(Dataset):
 
         self.seeds = ["bastoni", "spade", "coppe", "denari"]
         self.labels={}
-        self.n_cards = 10
+        self.n_cards = 20
         self.img_names = []
         self.train=train
 

@@ -12,23 +12,23 @@ from dataset import CardsDataset
 class CNN(nn.Module):
     def __init__(self):
         super().__init__()
-        self.feat_extractor = nn.Sequential(nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3),
+        self.feat_extractor = nn.Sequential(nn.Conv2d(in_channels=3, out_channels=10, kernel_size=5),
                                             nn.ReLU(),
-                                            nn.BatchNorm2d(64),
+                                            nn.BatchNorm2d(10),
                                             nn.MaxPool2d(4),
 
-                                            nn.Conv2d(64, 128, 3),
+                                            nn.Conv2d(10, 20, 3),
                                             nn.ReLU(),
-                                            nn.BatchNorm2d(128),
-                                            nn.MaxPool2d(4),
+                                            nn.BatchNorm2d(20),
+                                            nn.MaxPool2d(2),
                                             
-                                            nn.Conv2d(128, 192, 3),
+                                            nn.Conv2d(20, 30, 3),
                                             nn.ReLU(),
-                                            nn.BatchNorm2d(192),
+                                            nn.BatchNorm2d(30),
                                             nn.MaxPool2d(2)
                                             )
 
-        self.classifier = nn.Sequential(nn.Linear(37632, 1024),
+        self.classifier = nn.Sequential(nn.Linear(25230, 1024),
                                         nn.ReLU(),
                                         nn.Linear(1024, 1024),
                                         nn.ReLU(),
@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
 
     #resize o collate_fn
-    transform = transforms.Compose([transforms.Resize((500,500)),transforms.ToTensor(),
+    transform = transforms.Compose([transforms.Resize((600,300)),transforms.ToTensor(),
                                     transforms.Normalize((0.5,),
                                                          (0.5,))])
 
