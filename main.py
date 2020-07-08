@@ -7,7 +7,8 @@ import torchvision.transforms as transforms
 from tqdm import tqdm
 
 from dataset import CardsDataset
-
+import logging
+logging.basicConfig(filename='app.log', filemode='w', format='%(message)s')
 
 class CNN(nn.Module):
     def __init__(self):
@@ -32,7 +33,7 @@ class CNN(nn.Module):
                                         nn.ReLU(),
                                         nn.Linear(1024, 1024),
                                         nn.ReLU(),
-                                        nn.Linear(1024, 10))
+                                        nn.Linear(1024, 20))
 
     def forward(self, x):
         x = self.feat_extractor(x)
@@ -69,12 +70,13 @@ class Trainer(object):
                 loss.backward()  # compute the derivatives of the model
                 optimizer.step()  # update weights according to the optimizer
 
-            print('\nTest Accuracy at epoch {}: {}'.format(epoch, self.evaluate()))
+            print('\nTest Accuracy at epoch {}: {}'.format(epoch, self.evaluate(epoch)))
 
-    def evaluate(self):
+    def evaluate(self,epoch=0):
         self.model.eval()  # set the model to eval mode
         total_train = 0
         total_test = 0
+        logging.warning("E, {}".format(epoch))
         for images, labels in tqdm(self.test_loader,
                                    total=len(self.test_loader)):
 
@@ -84,6 +86,9 @@ class Trainer(object):
             output = self.softmax(self.model(images))
             predicted = torch.max(output, dim=1)[1]  # argmax the output
             total_test += (predicted == labels).sum().item()
+            for i in range(0,len(labels)):
+                logging.warning("{}, {}".format(labels[i],predicted[i]))
+
 
         for images, labels in tqdm(self.train_loader,
                                    total=len(self.train_loader)):
@@ -103,7 +108,7 @@ if __name__ == '__main__':
               'momentum': 0.9,
               'weight_decay': 0.001,
               'batch_size': 8,
-              'epochs': 40,
+              'epochs': 80,
               'device': 'cuda:0',
               'seed': 314}
 

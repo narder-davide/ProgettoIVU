@@ -17,7 +17,7 @@ class CardsDataset(Dataset):
         """
 
         #self.seeds = ["bastoni", "spade", "coppe", "denari"]
-        self.seeds = ["spade"]
+        self.seeds = ["spade","bastoni"]
 
         self.cards_names = ["asso", "2", "3", "4","5","6","7","fante","cavallo","re"]
         self.n_cards = 20
@@ -53,13 +53,6 @@ class CardsDataset(Dataset):
         return len(self.img_names)
 
     def __getitem__(self, index):
-        """
-        Generate one item of data set.
-
-        :param index: index of item in IDs list
-
-        :return: a sample of data as a dict
-        """
 
         X = Image.open(self.img_names[index])
 
