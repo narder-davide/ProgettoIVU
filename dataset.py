@@ -16,16 +16,14 @@ class CardsDataset(Dataset):
         :param transform: apply some transforms like cropping, rotating, etc on input image
         """
 
-        #self.seeds = ["bastoni", "spade", "coppe", "denari"]
-        self.seeds = ["spade","bastoni"]
+        self.seeds = ["bastoni", "spade", "coppe", "denari"]
 
         self.cards_names = ["asso", "2", "3", "4","5","6","7","fante","cavallo","re"]
-        self.n_cards = 20
+        self.n_cards = 40
         self.train=train
         self.img_dir = img_dir
 
         if not self.train:
-            self.n_cards=20
             self.img_dir = self.img_dir+"/test"
 
         self.labels={}
