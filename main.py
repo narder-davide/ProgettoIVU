@@ -5,31 +5,35 @@ from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as transforms
 from tqdm import tqdm
-
+import os
 from dataset import CardsDataset
 import logging
-logging.basicConfig(filename='app.log', filemode='w', format='%(message)s')
+
+logging.basicConfig(filename='test.log', filemode='w', format='%(message)s')
+PATH = "cnn.pt"
+
 
 class CNN(nn.Module):
     def __init__(self):
         super().__init__()
-        self.feat_extractor = nn.Sequential(nn.Conv2d(in_channels=3, out_channels=24, kernel_size=5),
+        self.feat_extractor = nn.Sequential(nn.Conv2d(3, 64, kernel_size=5, stride=2),
                                             nn.ReLU(),
-                                            nn.BatchNorm2d(24),
+                                            nn.BatchNorm2d(64),
                                             nn.MaxPool2d(2),
 
-                                            nn.Conv2d(24, 40, 3),
+                                            nn.Conv2d(64, 128, kernel_size=3),
                                             nn.ReLU(),
-                                            nn.BatchNorm2d(40),
+                                            nn.BatchNorm2d(128),
                                             nn.MaxPool2d(2),
-                                            
-                                            nn.Conv2d(40, 50, 3),
+
+                                            nn.Conv2d(128, 192, kernel_size=3),
                                             nn.ReLU(),
-                                            nn.BatchNorm2d(50),
-                                            nn.MaxPool2d(2)
+                                            nn.BatchNorm2d(192),
+                                            nn.MaxPool2d(2),
+
                                             )
 
-        self.classifier = nn.Sequential(nn.Linear(127750, 1024),
+        self.classifier = nn.Sequential(nn.Linear(114240, 1024),
                                         nn.ReLU(),
                                         nn.Linear(1024, 1024),
                                         nn.ReLU(),
@@ -63,7 +67,6 @@ class Trainer(object):
                                        total=len(self.train_loader)):
                 self.optimizer.zero_grad()  # don't forget this line!
                 images, labels = images.to(self.device), labels.to(self.device)
-
                 output = self.softmax(self.model(images))
                 loss = self.criterion(output, labels)
                 loss.backward()  # compute the derivatives of the model
@@ -85,8 +88,8 @@ class Trainer(object):
             output = self.softmax(self.model(images))
             predicted = torch.max(output, dim=1)[1]  # argmax the output
             total_test += (predicted == labels).sum().item()
-            for i in range(0,len(labels)):
-                logging.warning("{}, {}".format(labels[i],predicted[i]))
+            #for i in range(0,len(labels)):
+                #logging.warning("{}, {}".format(labels[i],predicted[i]))
 
 
         for images, labels in tqdm(self.train_loader,
@@ -99,6 +102,8 @@ class Trainer(object):
             predicted = torch.max(output, dim=1)[1]  # argmax the output
             total_train += (predicted == labels).sum().item()
 
+        logging.warning("{}, {}".format(total_test / len(self.test_loader.dataset),
+                                        total_train / len(self.train_loader.dataset)));
         return  total_test / len(self.test_loader.dataset), total_train / len(self.train_loader.dataset)
 
 
@@ -107,7 +112,7 @@ if __name__ == '__main__':
               'momentum': 0.9,
               'weight_decay': 0.001,
               'batch_size': 8,
-              'epochs': 80,
+              'epochs': 120,
               'device': 'cuda:0',
               'seed': 314}
 
@@ -123,7 +128,6 @@ if __name__ == '__main__':
     transform = transforms.Compose([transforms.Resize((600,300)),transforms.ToTensor(),
                                     transforms.Normalize((0.5,),
                                                          (0.5,))])
-
     model = CNN()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=config['lr'],
@@ -137,8 +141,14 @@ if __name__ == '__main__':
         CardsDataset(img_dir="data",train=False,transform=transform),
         batch_size=config['batch_size'], shuffle=False)
 
-
-    trainer = Trainer(model, config['device'], train_loader, test_loader,
-                      criterion, optimizer)
-
-    trainer.train(epochs=config['epochs'])
+    if os.path.isfile(PATH):
+        model = torch.load(PATH)
+        model.eval()
+        trainer = Trainer(model, config['device'], train_loader, test_loader,
+                          criterion, optimizer)
+        print('\nTest Accuracy at epoch {}: {}'.format(1, trainer.evaluate(1)))
+    else:
+        trainer = Trainer(model, config['device'], train_loader, test_loader,
+                          criterion, optimizer)
+        trainer.train(epochs=config['epochs'])
+        torch.save(model,PATH)
