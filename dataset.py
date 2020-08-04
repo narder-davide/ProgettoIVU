@@ -8,14 +8,6 @@ from torch.utils.data import Dataset
 class CardsDataset(Dataset):
     def __init__(self, img_dir='data', train=True, transform=None):
 
-        """
-        Initialize data set as a list of IDs corresponding to each item of data set
-
-        :param img_dir: path to image files as a uncompressed tar archive
-        :param txt_path: a text file containing names of all of images line by line
-        :param transform: apply some transforms like cropping, rotating, etc on input image
-        """
-
         self.seeds = ["bastoni", "spade", "coppe", "denari"]
 
         self.cards_names = ["asso", "2", "3", "4","5","6","7","fante","cavallo","re"]

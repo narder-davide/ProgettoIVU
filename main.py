@@ -8,6 +8,10 @@ from tqdm import tqdm
 import os
 from dataset import CardsDataset
 import logging
+from PIL import Image
+from PIL import ImageFont
+from PIL import ImageDraw
+import random
 
 logging.basicConfig(filename='test.log', filemode='w', format='%(message)s')
 PATH = "cnn.pt"
@@ -88,8 +92,6 @@ class Trainer(object):
             output = self.softmax(self.model(images))
             predicted = torch.max(output, dim=1)[1]  # argmax the output
             total_test += (predicted == labels).sum().item()
-            #for i in range(0,len(labels)):
-                #logging.warning("{}, {}".format(labels[i],predicted[i]))
 
 
         for images, labels in tqdm(self.train_loader,
@@ -105,6 +107,61 @@ class Trainer(object):
         logging.warning("{}, {}".format(total_test / len(self.test_loader.dataset),
                                         total_train / len(self.train_loader.dataset)));
         return  total_test / len(self.test_loader.dataset), total_train / len(self.train_loader.dataset)
+
+seeds = ["bastoni", "spade", "coppe", "denari"]
+cards_names = ["asso", "2", "3", "4", "5", "6", "7", "fante", "cavallo", "re"]
+
+def show_example(path, prediction):
+    image = Image.open(path)
+    font = ImageFont.truetype("arial.ttf", 25)
+
+    x = 75
+    y = 550
+
+    draw = ImageDraw.Draw(image)
+    w, h = font.getsize(prediction)
+    draw.rectangle((x, y, x + w, y + h), fill='white')
+
+    ImageDraw.Draw(
+        image  # Image
+    ).text(
+        (x, y),  # Coordinates
+        prediction,  # Text
+        (0, 0, 0),  # Color
+        font = font
+    )
+    image.show()
+
+def get_random_image():
+    random_seed = random.choice(seeds)
+    random_card = random.choice(cards_names)
+
+    random_file = random.choice(os.listdir("data/"+random_card+'_'+random_seed+'/'))
+    return "data/"+random_card+'_'+random_seed+'/'+random_file
+
+def get_example(loaded_model):
+    transform_image = transforms.Compose([transforms.Resize((600, 300)), transforms.ToTensor(),
+                                    transforms.Normalize((0.5,), (0.5,))])
+
+    img_path = get_random_image()
+
+    input_image = Image.open(img_path)
+
+    input_image = transform_image(input_image)
+    input_image = input_image.unsqueeze(0)
+
+    if torch.cuda.is_available():
+        input_image = input_image.cuda()
+
+    softmax = nn.Softmax(dim=1)
+    output = softmax(loaded_model(input_image))
+    pred = torch.max(output, dim=1)[1]  # argmax the output
+    pred = pred.item()
+
+    str_pred = cards_names[pred - int(pred/10)*10] + ' di ' + seeds[int(pred/10)]
+
+    return img_path, str_pred
+
 
 
 if __name__ == '__main__':
@@ -147,6 +204,9 @@ if __name__ == '__main__':
         trainer = Trainer(model, config['device'], train_loader, test_loader,
                           criterion, optimizer)
         print('\nTest Accuracy at epoch {}: {}'.format(1, trainer.evaluate(1)))
+
+        path, prediction = get_example(model)
+        show_example(path, prediction)
     else:
         trainer = Trainer(model, config['device'], train_loader, test_loader,
                           criterion, optimizer)
