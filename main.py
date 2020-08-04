@@ -115,17 +115,17 @@ def show_example(path, prediction):
     image = Image.open(path)
     font = ImageFont.truetype("arial.ttf", 25)
 
-    x = 75
-    y = 550
+    x = 300
+    y = 600
 
     draw = ImageDraw.Draw(image)
     w, h = font.getsize(prediction)
-    draw.rectangle((x, y, x + w, y + h), fill='white')
+    draw.rectangle(((x - w)/2, y - 50, (x - w)/2 + w, y - 50 + h), fill='white')
 
     ImageDraw.Draw(
         image  # Image
     ).text(
-        (x, y),  # Coordinates
+        ((x - w)/2, y - 50),  # Coordinates
         prediction,  # Text
         (0, 0, 0),  # Color
         font = font
@@ -155,10 +155,13 @@ def get_example(loaded_model):
 
     softmax = nn.Softmax(dim=1)
     output = softmax(loaded_model(input_image))
+    prob = torch.max(output, dim=1)[0].item()
     pred = torch.max(output, dim=1)[1]  # argmax the output
     pred = pred.item()
 
-    str_pred = cards_names[pred - int(pred/10)*10] + ' di ' + seeds[int(pred/10)]
+    prob = float(round(prob, 3))
+
+    str_pred = cards_names[pred - int(pred/10)*10] + ' di ' + seeds[int(pred/10)] + ': ' + str(prob)
 
     return img_path, str_pred
 
