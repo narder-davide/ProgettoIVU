@@ -120,7 +120,7 @@ def show_example(path, prediction):
 
     draw = ImageDraw.Draw(image)
     w, h = font.getsize(prediction)
-    draw.rectangle(((x - w)/2, y - 50, (x - w)/2 + w, y - 50 + h), fill='white')
+    draw.rectangle(((x - w)/2 - 4, y - 50, (x - w)/2 + w + 4, y - 50 + h), fill='white')
 
     ImageDraw.Draw(
         image  # Image
