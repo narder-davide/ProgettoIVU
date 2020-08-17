@@ -136,8 +136,8 @@ def get_random_image():
     random_seed = random.choice(seeds)
     random_card = random.choice(cards_names)
 
-    random_file = random.choice(os.listdir("data/"+random_card+'_'+random_seed+'/'))
-    return "data/"+random_card+'_'+random_seed+'/'+random_file
+    random_file = random.choice(os.listdir("data/test/"+random_card+'_'+random_seed+'/'))
+    return "data/test/"+random_card+'_'+random_seed+'/'+random_file
 
 def get_example(loaded_model):
     transform_image = transforms.Compose([transforms.Resize((600, 300)), transforms.ToTensor(),
